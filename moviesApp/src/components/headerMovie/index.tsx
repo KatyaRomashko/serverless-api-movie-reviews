@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useQuery } from "react-query";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Paper from "@mui/material/Paper";
@@ -18,17 +19,19 @@ const styles = {
   },
 };
 
-const MovieHeader: React.FC<MovieDetailsProps> = (movie) => {
-  const [isFavourite, setIsFavourite] = useState(false);
 
-  useEffect(() => {
-    const storedFavourites = localStorage.getItem("favourites");
-    if (storedFavourites) {
-      const favourites = JSON.parse(storedFavourites);
-      const found = favourites.find((m: { id: number }) => m.id === movie.id);
-      setIsFavourite(!!found);
-    }
-  }, [movie.id]);
+const getFavourites = (): { id: number }[] => {
+  const stored = localStorage.getItem("favourites");
+  return stored ? JSON.parse(stored) : [];
+};
+
+const MovieHeader: React.FC<MovieDetailsProps> = (movie) => {
+  const { data: favourites = [] } = useQuery("favourites", getFavourites, {
+    staleTime: Infinity,
+    cacheTime: Infinity,
+  });
+
+  const isFavourite = favourites.some((m) => m.id === movie.id);
 
   return (
     <Paper component="div" sx={styles.root}>
@@ -46,7 +49,9 @@ const MovieHeader: React.FC<MovieDetailsProps> = (movie) => {
         <br />
         <span>{movie.tagline}</span>
       </Typography>
+
       {isFavourite && <FavoriteIcon color="error" fontSize="large" />}
+
       <IconButton aria-label="go forward">
         <ArrowForwardIcon color="primary" fontSize="large" />
       </IconButton>
