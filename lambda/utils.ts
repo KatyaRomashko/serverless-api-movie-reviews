@@ -4,6 +4,7 @@ import {
   PolicyDocument,
   APIGatewayProxyEvent,
   StatementEffect,
+  APIGatewayProxyEventV2,
 } from "aws-lambda";
 
 import axios from "axios"
@@ -24,7 +25,7 @@ export type Jwk = {
 };
 
 export const parseCookies = (
-  event: APIGatewayRequestAuthorizerEvent | APIGatewayProxyEvent
+  event: APIGatewayRequestAuthorizerEvent | APIGatewayProxyEvent | APIGatewayProxyEventV2
 ) => {
   if (!event.headers || !event.headers.Cookie) {
     return undefined;
@@ -51,9 +52,9 @@ export const verifyToken = async (
   try {
     const url = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`;
     const { data }: { data: Jwk } = await axios.get(url);
-    const pem = jwkToPem(data.keys[0]);
+    const pem = jwkToPem(data.keys[0] as jwkToPem.RSA);
 
-    return jwt.verify(token, pem, { algorithms: ["RS256"] });
+    return jwt.verify(token, pem, { algorithms: ["RS256"] }) as JwtToken;
   } catch (err) {
     console.log(err);
     return null;

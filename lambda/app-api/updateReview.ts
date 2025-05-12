@@ -2,13 +2,7 @@ import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
-import {
-  CookieMap,
-  createPolicy,
-  JwtToken,
-  parseCookies,
-  verifyToken,
-} from "../utils";
+import {CookieMap,JwtToken,parseCookies,verifyToken} from "../utils";
 
 const ajv = new Ajv();
 
