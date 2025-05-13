@@ -88,16 +88,47 @@ export const getMovies = () => {
             throw error
           });
       };
-      export const getActors = (page: number = 1) => {
-        return fetch(
-          `https://api.themoviedb.org/3/person/popular?api_key=${import.meta.env.VITE_TMDB_KEY}`
-        )
-          .then((response) => {
-            if (!response.ok)
-              throw new Error(`Failed to fetch actors. Status: ${response.status}`);
-            return response.json();
-          })
-          .catch((error) => {
-            throw error;
-          });
+      export const getActors = async (pageNumber: number = 1) => {
+        const apiKey = import.meta.env.VITE_TMDB_KEY;
+        const url = `https://api.themoviedb.org/3/person/popular?api_key=${apiKey}&page=${pageNumber}`;
+        
+        const response = await fetch(url);
+        if (response.status !== 200) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        return await response.json();
+      };
+
+      export const getActorDetails = async (performerId: string) => {
+        const response = await fetch(
+          `https://api.themoviedb.org/3/person/${performerId}?api_key=${import.meta.env.VITE_TMDB_KEY}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Unable to fetch performer details (HTTP ${response.status})`);
+        }
+        return await response.json();
+      };
+      
+      export const getActorFilmography = async (performerId: string) => {
+        const response = await fetch(
+          `https://api.themoviedb.org/3/person/${performerId}/movie_credits?api_key=${import.meta.env.VITE_TMDB_KEY}`
+        );
+        
+        const data = await response.json();
+        return data.cast || [];
+      };
+
+      export const gethActorFilmRoles = async (performerId: string) => {
+        const apiKey = import.meta.env.VITE_TMDB_KEY;
+        const response = await fetch(
+          `https://api.themoviedb.org/3/person/${performerId}/movie_credits?api_key=${apiKey}`
+        );
+      
+        if (!response.ok) {
+          throw new Error(`Filmography request failed with status ${response.status}`);
+        }
+      
+        const data = await response.json();
+        return data.cast || [];
       };

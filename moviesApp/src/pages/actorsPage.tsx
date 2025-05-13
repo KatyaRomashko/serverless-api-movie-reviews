@@ -1,97 +1,104 @@
-import React, { useState } from "react";
-import { useQuery } from "react-query";
-import { Button, Grid, Typography } from "@mui/material";
-import { Link } from "react-router-dom";
-import Header from "../components/headerMovieList";
+// actorsPage.tsx
+import { useCallback, useEffect, useState } from "react";
 import { getActors } from "../api/tmdb-api";
+import { Box, Card, CardContent, CardMedia, Container, IconButton } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import Header from "../components/headerMovieList";
+import CustomPagination from "../components/customPageNav"; 
 
 interface Actor {
-  id: number;
-  name: string;
-  profile_path: string;
-  known_for_department: string;
+  actorId: number;
+  fullName: string;
+  imageUrl: string | null;
+  profession: string;
 }
 
-const ActorsPage: React.FC = () => {
-  const [page, setPage] = useState(1);
+const ActorsListing: React.FC = () => {
+  const [actors, setActors] = useState<Actor[]>([]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(1);
+  const [maxPageCount, setMaxPageCount] = useState(1);
+  const navigate = useNavigate();
 
-  const {
-    data,
-    error,
-    isLoading,
-    isError,
-  } = useQuery<{ results: Actor[] }, Error>(["actors", page], () => getActors(page), {
-    keepPreviousData: true,
-    staleTime: 5 * 60 * 1000, 
-  });
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await getActors(currentPageIndex);
+      const actorData = response.results.map((item: any) => ({
+        actorId: item.id,
+        fullName: item.name,
+        imageUrl: item.profile_path,
+        profession: item.known_for_department
+      }));
+      setActors(actorData);
+      setMaxPageCount(response.total_pages);
+    } catch (error) {
+      console.log("Error loading actors:", error);
+    }
+  }, [currentPageIndex]);
 
-  if (isLoading) {
-    return <Typography variant="h5" align="center">Loading...</Typography>;
-  }
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  if (isError) {
-    return <Typography variant="h5" align="center">Error: {error.message}</Typography>;
-  }
-
-  const actors = data?.results || [];
+  const updatePage = (_: unknown, newIndex: number) => {
+    setCurrentPageIndex(newIndex);
+  };
 
   return (
-    <div>
-      <Header title="ACTORS" />
-
-      <Grid container spacing={4} justifyContent="center">
+    <Container maxWidth="xl">
+      <Header title="Actors" />
+      
+      <Box sx={{ 
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+        gap: 3,
+        padding: 3
+      }}>
         {actors.map((actor) => (
-          <Grid key={actor.id} item xs={12} sm={6} md={4} lg={3}>
-            <Link to={`/actors/${actor.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-              <div style={{ textAlign: "center" }}>
-                <img
-                  src={
-                    actor.profile_path
-                      ? `https://image.tmdb.org/t/p/w300${actor.profile_path}`
-                      : "https://via.placeholder.com/300x450?text=No+Image"
-                  }
-                  alt={actor.name}
-                  style={{ width: "100%", height: "auto", borderRadius: "10px" }}
-                />
-                <Typography variant="h6" style={{ marginTop: "8px" }}>
-                  {actor.name}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {actor.known_for_department}
-                </Typography>
-              </div>
-            </Link>
-            <Button
-              variant="outlined"
-              size="small"
-              component={Link}
-              to={`/actors/${actor.id}/info`}
-              style={{ marginTop: "8px" }}
+          <Card key={actor.actorId} sx={{ cursor: "pointer" }}>
+            <Box>
+              <CardMedia
+                component="img"
+                height="350"
+                image={
+                  actor.imageUrl 
+                    ? `https://image.tmdb.org/t/p/w300${actor.imageUrl}`
+                    : "/placeholder-actor.jpg"
+                }
+                alt={actor.fullName}
+              />
+              <CardContent>
+                <Box component="h3" sx={{ margin: 0 }}>{actor.fullName}</Box>
+                <Box component="p" sx={{ color: "text.secondary" }}>
+                  {actor.profession}
+                </Box>
+              </CardContent>
+            </Box >
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <IconButton 
+              onClick={() => navigate(`/actors/${actor.actorId}/details`)}
+              sx={{ marginLeft: 1, marginBottom: 1 }}
             >
-              More Info
-            </Button>
-          </Grid>
+              Details
+            </IconButton>
+            <IconButton 
+                  onClick={() => navigate(`/actors/${actor.actorId}`)}
+            >View films</IconButton>
+        
+            </Box>
+            
+   
+          </Card>
         ))}
-      </Grid>
+      </Box>
 
-      <div style={{ textAlign: "center", marginTop: "2rem" }}>
-        <Button
-          variant="contained"
-          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          disabled={page === 1}
-          style={{ marginRight: "1rem" }}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => setPage((prev) => prev + 1)}
-        >
-          Next
-        </Button>
-      </div>
-    </div>
+      <CustomPagination
+        totalItems={maxPageCount * 20}
+        perPage={20}
+        currentPage={currentPageIndex}
+        pageChangeHandler={updatePage}
+      />
+    </Container>
   );
 };
 
-export default ActorsPage;
+export default ActorsListing;
