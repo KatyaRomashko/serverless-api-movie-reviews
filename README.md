@@ -1,4 +1,4 @@
-# Enterprise Web Development module -  Assignment 2
+# Enterprise Web Development module -  Assignment 2 (the whole application is in the folder moviesApp)
 
 __Name:__ Kateryna Romashko
 
